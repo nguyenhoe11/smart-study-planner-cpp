@@ -5,9 +5,10 @@ A C++ and SQL Server flashcard planner for practicing database design, SQL queri
 ## Current Scope
 
 - SQL Server schema for subjects, topics, flashcards, and review logs.
-- C++20 CLI starter app.
+- C++20 CLI app with a menu-driven workflow.
 - ODBC connection to SQL Server Express.
 - Seed data for database and C++ algorithm flashcards.
+- Flashcard listing, creation, review logging, and weak-topic statistics.
 
 ## Requirements
 
@@ -37,8 +38,8 @@ sql/seed.sql
 Open a Visual Studio Developer PowerShell or Developer Command Prompt, then run:
 
 ```powershell
-cmake -S . -B build
-cmake --build build --config Debug
+cmake -S . -B build -G "NMake Makefiles"
+cmake --build build
 ```
 
 ## Run
@@ -59,9 +60,21 @@ If Windows Authentication is not available, run with a SQL Server login:
 .\build\smart_study_planner.exe --user app_user --password your_password
 ```
 
+## CLI Features
+
+```text
+1. List flashcards
+2. Add flashcard
+3. Review due flashcards
+4. Show weak topics
+5. Exit
+```
+
+The review flow updates `ReviewLogs`, doubles the review interval for correct answers up to 30 days, and resets the interval to 1 day for wrong answers.
+
 ## Next Features
 
-- Add CLI menu for adding flashcards.
-- Implement review result updates.
-- Use a priority queue to choose today's review list.
-- Add statistics queries for weak topics and weekly progress.
+- Add edit/delete flashcard actions.
+- Add a clearer spaced-repetition scoring algorithm.
+- Add weekly progress reports.
+- Add unit-style tests for SQL helper behavior.
