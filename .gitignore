@@ -1,0 +1,14 @@
+build/
+.vs/
+.vscode/
+*.exe
+*.obj
+*.pdb
+*.ilk
+*.user
+*.log
+*.db
+*.bak
+.env
+config.local.json
+
