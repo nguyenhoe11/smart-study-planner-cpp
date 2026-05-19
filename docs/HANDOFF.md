@@ -23,6 +23,7 @@ This file is the quick restart note for future Codex sessions.
   - Web migration plan is documented in `docs/WEB_MIGRATION_PLAN.md`.
 - Learning guide document exists at `docs/Smart_Study_Planner_Project_Guide.docx`.
 - VS Code/codebase-only guide exists at `docs/VSCode_Codebase_Guide.docx`.
+- C++ CLI + SQL Server Express deep explanation exists at `docs/CPP_CLI_SQL_Server_Express_Guide.docx`.
 
 ## Local Setup Notes
 
