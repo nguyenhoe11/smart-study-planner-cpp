@@ -1,20 +1,9 @@
 #pragma once
 
 #include "DbConnection.h"
-
-#include <string>
-
-struct StudyStatistics {
-    int totalFlashcards;
-    int totalReviews;
-    int correctCount;
-    int wrongCount;
-    std::wstring accuracy;
-    int dueTodayCount;
-};
+#include "models/StudyStatistics.h"
 
 class StatisticsRepository {
 public:
     static StudyStatistics getStudyStatistics(DbConnection& db);
 };
-

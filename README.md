@@ -116,6 +116,11 @@ smart-study-planner-cpp/
     TopicRepository.h
     TopicService.h
     Utils.h
+    models/
+      Flashcard.h
+      Review.h
+      StudyStatistics.h
+      Topic.h
   src/
     DbConnection.cpp
     FlashcardRepository.cpp
@@ -132,9 +137,25 @@ smart-study-planner-cpp/
   sql/
     schema.sql
     seed.sql
+  docs/
+    API_CONTRACT.md
+    WEB_MIGRATION_PLAN.md
   CMakeLists.txt
   README.md
 ```
+
+## Web Migration
+
+The CLI is structured so it can later become a web app:
+
+```text
+main.cpp -> Menu -> Service -> Repository -> DbConnection -> SQL Server
+```
+
+See:
+
+- `docs/API_CONTRACT.md`
+- `docs/WEB_MIGRATION_PLAN.md`
 
 ## Learning Goals
 
