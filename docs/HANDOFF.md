@@ -21,6 +21,7 @@ This file is the quick restart note for future Codex sessions.
   - Static frontend prototype exists in `web/frontend`.
   - API contract is documented in `docs/API_CONTRACT.md`.
   - Web migration plan is documented in `docs/WEB_MIGRATION_PLAN.md`.
+- Learning guide document exists at `docs/Smart_Study_Planner_Project_Guide.docx`.
 
 ## Local Setup Notes
 
@@ -75,4 +76,3 @@ http://127.0.0.1:8000
 4. Add dashboard cards for study statistics and weak topics.
 5. Improve styling for a portfolio-ready web app.
 6. Add screenshots and demo instructions to `README.md`.
-
