@@ -156,6 +156,9 @@ See:
 
 - `docs/API_CONTRACT.md`
 - `docs/WEB_MIGRATION_PLAN.md`
+- `web/README.md`
+
+An initial FastAPI + plain HTML/CSS/JavaScript web prototype is scaffolded in `web/`.
 
 ## Learning Goals
 

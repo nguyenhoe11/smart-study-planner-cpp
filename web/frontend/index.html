@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Study Planner</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>Smart Study Planner</h1>
+        <p>C++ + SQL Server flashcards, now prepared for the web.</p>
+      </div>
+      <button id="refreshButton">Refresh</button>
+    </header>
+
+    <main class="layout">
+      <section class="panel stats-panel">
+        <h2>Statistics</h2>
+        <div id="statsGrid" class="stats-grid"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-header">
+          <h2>Flashcards</h2>
+          <div class="search-row">
+            <input id="searchInput" type="search" placeholder="Search question, answer, topic..." />
+            <button id="searchButton">Search</button>
+          </div>
+        </div>
+        <div id="flashcardList" class="list"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Add Flashcard</h2>
+        <form id="addForm" class="form-grid">
+          <select id="topicSelect" required></select>
+          <input id="questionInput" type="text" placeholder="Question" required />
+          <input id="answerInput" type="text" placeholder="Answer" required />
+          <input id="difficultyInput" type="number" min="1" max="5" value="3" required />
+          <button type="submit">Add</button>
+        </form>
+      </section>
+
+      <section class="panel two-column">
+        <div>
+          <h2>Due Reviews</h2>
+          <div id="reviewList" class="list"></div>
+        </div>
+        <div>
+          <h2>Weak Topics</h2>
+          <div id="weakTopicList" class="list"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
+
