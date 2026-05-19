@@ -7,10 +7,13 @@ A C++20 and SQL Server flashcard planner that helps students organize topics, re
 - Manage study flashcards from a C++ CLI.
 - Store subjects, topics, flashcards, and review history in SQL Server.
 - List all flashcards with subject, topic, difficulty, and next review time.
+- Search flashcards by question, answer, topic, or subject.
 - Add new flashcards from the terminal.
+- Edit and delete existing flashcards.
 - Review due flashcards and save correct/wrong results.
 - Update the next review date based on review performance.
 - Show weak topics based on wrong-answer rate.
+- Show overall study statistics.
 
 ## Tech Stack
 
@@ -41,10 +44,14 @@ Subjects 1---N Topics 1---N Flashcards 1---N ReviewLogs
 ```text
 Smart Study Planner
 1. List flashcards
-2. Add flashcard
-3. Review due flashcards
-4. Show weak topics
-5. Exit
+2. Search flashcards
+3. Add flashcard
+4. Edit flashcard
+5. Delete flashcard
+6. Review due flashcards
+7. Show weak topics
+8. Show study statistics
+9. Exit
 ```
 
 ## Review Logic
@@ -99,9 +106,29 @@ Optional:
 smart-study-planner-cpp/
   include/
     DbConnection.h
+    FlashcardRepository.h
+    FlashcardService.h
+    Menu.h
+    ReviewRepository.h
+    ReviewService.h
+    StatisticsRepository.h
+    StatisticsService.h
+    TopicRepository.h
+    TopicService.h
+    Utils.h
   src/
     DbConnection.cpp
+    FlashcardRepository.cpp
+    FlashcardService.cpp
     main.cpp
+    Menu.cpp
+    ReviewRepository.cpp
+    ReviewService.cpp
+    StatisticsRepository.cpp
+    StatisticsService.cpp
+    TopicRepository.cpp
+    TopicService.cpp
+    Utils.cpp
   sql/
     schema.sql
     seed.sql

@@ -8,6 +8,16 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(smart_study_planner
     src/DbConnection.cpp
+    src/FlashcardRepository.cpp
+    src/FlashcardService.cpp
+    src/ReviewRepository.cpp
+    src/ReviewService.cpp
+    src/StatisticsRepository.cpp
+    src/StatisticsService.cpp
+    src/TopicRepository.cpp
+    src/TopicService.cpp
+    src/Utils.cpp
+    src/Menu.cpp
     src/main.cpp
 )
 
@@ -18,4 +28,3 @@ if (WIN32)
 else()
     message(FATAL_ERROR "This starter project currently targets Windows ODBC.")
 endif()
-
