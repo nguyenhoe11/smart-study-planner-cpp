@@ -22,6 +22,7 @@ This file is the quick restart note for future Codex sessions.
   - API contract is documented in `docs/API_CONTRACT.md`.
   - Web migration plan is documented in `docs/WEB_MIGRATION_PLAN.md`.
 - Learning guide document exists at `docs/Smart_Study_Planner_Project_Guide.docx`.
+- VS Code/codebase-only guide exists at `docs/VSCode_Codebase_Guide.docx`.
 
 ## Local Setup Notes
 
