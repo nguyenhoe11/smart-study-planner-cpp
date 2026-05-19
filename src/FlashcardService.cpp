@@ -80,6 +80,10 @@ void FlashcardService::editFlashcard(DbConnection& db) {
         std::wcout << L"Invalid flashcard ID.\n";
         return;
     }
+    if (!FlashcardRepository::exists(db, flashcardId)) {
+        std::wcout << L"Flashcard not found.\n";
+        return;
+    }
 
     std::wstring question = readLine(L"New question: ");
     std::wstring answer = readLine(L"New answer: ");
@@ -100,6 +104,10 @@ void FlashcardService::deleteFlashcard(DbConnection& db) {
     int flashcardId = readInt(L"\nFlashcard ID to delete: ", 0);
     if (flashcardId <= 0) {
         std::wcout << L"Invalid flashcard ID.\n";
+        return;
+    }
+    if (!FlashcardRepository::exists(db, flashcardId)) {
+        std::wcout << L"Flashcard not found.\n";
         return;
     }
 

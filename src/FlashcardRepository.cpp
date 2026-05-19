@@ -63,6 +63,15 @@ std::vector<Flashcard> FlashcardRepository::search(DbConnection& db, const std::
     ));
 }
 
+bool FlashcardRepository::exists(DbConnection& db, int flashcardId) {
+    auto rows = db.query(
+        L"SELECT COUNT(*) FROM dbo.Flashcards WHERE FlashcardId = " +
+        std::to_wstring(flashcardId) + L";"
+    );
+
+    return !rows.empty() && !rows[0].empty() && std::stoi(rows[0][0]) > 0;
+}
+
 void FlashcardRepository::create(DbConnection& db, int topicId, const std::wstring& question, const std::wstring& answer, int difficulty) {
     std::wstring sql =
         L"INSERT INTO dbo.Flashcards (TopicId, Question, Answer, Difficulty) VALUES (" +
