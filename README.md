@@ -1,22 +1,61 @@
 # Smart Study Planner
 
-A C++ and SQL Server flashcard planner for practicing database design, SQL queries, and basic scheduling algorithms.
+A C++20 and SQL Server flashcard planner that helps students organize topics, review flashcards, and track weak areas using a simple spaced-repetition workflow.
 
-## Current Scope
+## Features
 
-- SQL Server schema for subjects, topics, flashcards, and review logs.
-- C++20 CLI app with a menu-driven workflow.
-- ODBC connection to SQL Server Express.
-- Seed data for database and C++ algorithm flashcards.
-- Flashcard listing, creation, review logging, and weak-topic statistics.
+- Manage study flashcards from a C++ CLI.
+- Store subjects, topics, flashcards, and review history in SQL Server.
+- List all flashcards with subject, topic, difficulty, and next review time.
+- Add new flashcards from the terminal.
+- Review due flashcards and save correct/wrong results.
+- Update the next review date based on review performance.
+- Show weak topics based on wrong-answer rate.
 
-## Requirements
+## Tech Stack
 
-- Visual Studio 2026 with Desktop development with C++.
-- CMake.
-- SQL Server Express instance named `SQLEXPRESS`.
-- ODBC Driver 18 for SQL Server.
-- Git.
+- C++20
+- SQL Server Express
+- ODBC Driver 18 for SQL Server
+- CMake
+- Visual Studio 2026 MSVC toolchain
+- Git
+
+## Database Schema
+
+Main tables:
+
+- `Subjects`
+- `Topics`
+- `Flashcards`
+- `ReviewLogs`
+
+Relationship overview:
+
+```text
+Subjects 1---N Topics 1---N Flashcards 1---N ReviewLogs
+```
+
+## CLI Menu
+
+```text
+Smart Study Planner
+1. List flashcards
+2. Add flashcard
+3. Review due flashcards
+4. Show weak topics
+5. Exit
+```
+
+## Review Logic
+
+When a flashcard is reviewed:
+
+- Correct answer: review interval doubles, capped at 30 days.
+- Wrong answer: review interval resets to 1 day.
+- Every review is saved in `ReviewLogs`.
+
+This keeps difficult cards appearing sooner while easier cards are gradually spaced out.
 
 ## Database Setup
 
@@ -54,27 +93,29 @@ Optional:
 .\build\smart_study_planner.exe --server HOANE\SQLEXPRESS --database SmartStudyPlanner
 ```
 
-If Windows Authentication is not available, run with a SQL Server login:
-
-```powershell
-.\build\smart_study_planner.exe --user app_user --password your_password
-```
-
-## CLI Features
+## Project Structure
 
 ```text
-1. List flashcards
-2. Add flashcard
-3. Review due flashcards
-4. Show weak topics
-5. Exit
+smart-study-planner-cpp/
+  include/
+    DbConnection.h
+  src/
+    DbConnection.cpp
+    main.cpp
+  sql/
+    schema.sql
+    seed.sql
+  CMakeLists.txt
+  README.md
 ```
 
-The review flow updates `ReviewLogs`, doubles the review interval for correct answers up to 30 days, and resets the interval to 1 day for wrong answers.
+## Learning Goals
 
-## Next Features
+This project demonstrates:
 
-- Add edit/delete flashcard actions.
-- Add a clearer spaced-repetition scoring algorithm.
-- Add weekly progress reports.
-- Add unit-style tests for SQL helper behavior.
+- SQL Server schema design
+- C++ database connectivity with ODBC
+- CLI application structure
+- SQL joins and aggregate queries
+- Basic spaced-repetition scheduling
+- Git/GitHub project workflow
