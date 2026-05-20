@@ -23,6 +23,7 @@ const elements = {
   searchInput: document.querySelector("#searchInput"),
   searchButton: document.querySelector("#searchButton"),
   clearSearchButton: document.querySelector("#clearSearchButton"),
+  searchSummary: document.querySelector("#searchSummary"),
   flashcardList: document.querySelector("#flashcardList"),
   flashcardForm: document.querySelector("#flashcardForm"),
   editingId: document.querySelector("#editingId"),
@@ -66,6 +67,35 @@ function difficultyClass(difficulty) {
   if (difficulty <= 2) return "difficulty-low";
   if (difficulty >= 4) return "difficulty-high";
   return "difficulty-mid";
+}
+
+function normalizeSearchText(value) {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function visibleFlashcards() {
+  const keyword = normalizeSearchText(state.currentSearch);
+  if (!keyword) return state.flashcards;
+
+  return state.flashcards.filter((card) => {
+    const searchableText = normalizeSearchText(
+      [card.question, card.answer, card.topicName, card.subjectName].join(" ")
+    );
+    return searchableText.includes(keyword);
+  });
+}
+
+function renderSearchSummary(visibleCount) {
+  if (!state.currentSearch) {
+    elements.searchSummary.textContent = `Showing all ${state.flashcards.length} flashcards.`;
+    return;
+  }
+
+  elements.searchSummary.textContent = `Showing ${visibleCount} result${visibleCount === 1 ? "" : "s"} for "${state.currentSearch}".`;
 }
 
 function showToast(message, type = "info") {
@@ -259,13 +289,9 @@ async function loadDashboard() {
   setBusy(true);
   try {
     await checkHealth();
-    const flashcardUrl = state.currentSearch
-      ? `${api.flashcardSearch}?keyword=${encodeURIComponent(state.currentSearch)}`
-      : api.flashcards;
-
     const [stats, flashcards, topics, dueReviews, weakTopics] = await Promise.all([
       requestJson(api.statistics),
-      requestJson(flashcardUrl),
+      requestJson(api.flashcards),
       requestJson(api.topics),
       requestJson(api.dueReviews),
       requestJson(api.weakTopics),
@@ -273,8 +299,10 @@ async function loadDashboard() {
 
     state.flashcards = flashcards;
     state.topics = topics;
+    const filteredFlashcards = visibleFlashcards();
     renderStats(stats);
-    renderFlashcards(flashcards);
+    renderFlashcards(filteredFlashcards);
+    renderSearchSummary(filteredFlashcards.length);
     renderTopics(topics);
     renderDueReviews(dueReviews);
     renderWeakTopics(weakTopics);
@@ -371,13 +399,16 @@ async function saveReview(flashcardId, wasCorrect) {
 
 function searchFlashcards() {
   state.currentSearch = elements.searchInput.value.trim();
-  loadDashboard();
+  const filteredFlashcards = visibleFlashcards();
+  renderFlashcards(filteredFlashcards);
+  renderSearchSummary(filteredFlashcards.length);
 }
 
 function clearSearch() {
   state.currentSearch = "";
   elements.searchInput.value = "";
-  loadDashboard();
+  renderFlashcards(state.flashcards);
+  renderSearchSummary(state.flashcards.length);
 }
 
 elements.refreshButton.addEventListener("click", loadDashboard);
@@ -385,6 +416,12 @@ elements.searchButton.addEventListener("click", searchFlashcards);
 elements.clearSearchButton.addEventListener("click", clearSearch);
 elements.searchInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") searchFlashcards();
+});
+elements.searchInput.addEventListener("input", () => {
+  state.currentSearch = elements.searchInput.value.trim();
+  const filteredFlashcards = visibleFlashcards();
+  renderFlashcards(filteredFlashcards);
+  renderSearchSummary(filteredFlashcards.length);
 });
 elements.flashcardForm.addEventListener("submit", saveFlashcard);
 elements.cancelEditButton.addEventListener("click", resetForm);

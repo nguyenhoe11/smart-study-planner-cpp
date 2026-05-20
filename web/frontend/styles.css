@@ -340,6 +340,12 @@ main {
   min-width: 280px;
 }
 
+.search-summary {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin: -0.25rem 0 0;
+}
+
 .card-list,
 .review-list,
 .compact-list {

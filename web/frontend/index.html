@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Study Planner</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/styles.css?v=search-fix" />
   </head>
   <body>
     <div class="app-shell">
@@ -61,6 +61,7 @@
                   <button id="clearSearchButton" class="secondary" type="button">Clear</button>
                 </div>
               </div>
+              <p id="searchSummary" class="search-summary">Showing all flashcards.</p>
               <div id="flashcardList" class="card-list" aria-live="polite"></div>
             </div>
 
@@ -132,6 +133,6 @@
 
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=search-fix"></script>
   </body>
 </html>
