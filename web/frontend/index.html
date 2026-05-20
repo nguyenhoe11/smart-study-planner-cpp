@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Study Planner</title>
-    <link rel="stylesheet" href="/static/styles.css?v=study-tools" />
+    <link rel="stylesheet" href="/static/styles.css?v=documents" />
   </head>
   <body>
     <div class="app-shell">
@@ -18,6 +18,7 @@
         </div>
         <nav class="nav-list" aria-label="Primary sections">
           <a href="#dashboard">Dashboard</a>
+          <a href="#documents">Documents</a>
           <a href="#flashcards">Flashcards</a>
           <a href="#editor">Editor</a>
           <a href="#review">Review</a>
@@ -47,6 +48,78 @@
               </div>
             </div>
             <div id="statsGrid" class="stats-grid" aria-live="polite"></div>
+          </section>
+
+          <section id="documents" class="workspace-section">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Documents</p>
+                <h3>Study document library</h3>
+              </div>
+              <div class="toolbar">
+                <input id="documentSearchInput" type="search" placeholder="Search saved documents" />
+                <button id="newDocumentButton" class="secondary" type="button">New document</button>
+              </div>
+            </div>
+
+            <div class="document-layout">
+              <aside class="tool-panel document-library">
+                <div class="subsection-heading">
+                  <h4>Import from a website</h4>
+                  <p>Paste an article or documentation URL, then edit the extracted content before saving.</p>
+                </div>
+                <form id="importForm" class="inline-form">
+                  <input id="importUrlInput" type="url" placeholder="https://example.com/article" required />
+                  <button id="importButton" type="submit">Fetch content</button>
+                </form>
+
+                <div class="subsection-heading">
+                  <h4>Saved documents</h4>
+                  <p id="documentSummary">No documents loaded yet.</p>
+                </div>
+                <div id="documentList" class="document-list" aria-live="polite"></div>
+              </aside>
+
+              <div class="document-editor-panel">
+                <div class="panel-heading">
+                  <div>
+                    <p class="eyebrow">Editor</p>
+                    <h3 id="documentEditorTitle">New study document</h3>
+                  </div>
+                  <div class="topbar-actions">
+                    <button id="saveDocumentButton" type="button">Save document</button>
+                    <button id="deleteDocumentButton" class="danger hidden" type="button">Delete</button>
+                  </div>
+                </div>
+
+                <div class="document-meta-grid">
+                  <label>
+                    Title
+                    <input id="documentTitleInput" type="text" maxlength="250" placeholder="Document title" />
+                  </label>
+                  <label>
+                    Tags
+                    <input id="documentTagsInput" type="text" maxlength="250" placeholder="database, c++, sql" />
+                  </label>
+                  <label class="source-field">
+                    Source URL
+                    <input id="documentSourceInput" type="url" maxlength="1000" placeholder="https://..." />
+                  </label>
+                </div>
+
+                <div id="documentSourcePreview" class="source-preview hidden"></div>
+
+                <label>
+                  Editable content
+                  <textarea id="documentContentInput" class="document-content" rows="22" placeholder="Fetch a web page or write your own notes here."></textarea>
+                </label>
+
+                <div class="document-footer">
+                  <p id="documentStatus" class="search-summary">Draft is not saved yet.</p>
+                  <div id="documentLinksList" class="source-links" aria-live="polite"></div>
+                </div>
+              </div>
+            </div>
           </section>
 
           <section id="flashcards" class="workspace-section two-pane">
@@ -189,6 +262,6 @@
 
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-    <script src="/static/app.js?v=study-tools"></script>
+    <script src="/static/app.js?v=documents"></script>
   </body>
 </html>

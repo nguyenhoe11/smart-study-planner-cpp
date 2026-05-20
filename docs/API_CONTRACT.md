@@ -89,3 +89,42 @@ Example statistics response:
 - Frontend: React or plain HTML/CSS/JavaScript for a first version.
 
 The current repository classes already isolate most SQL queries, so a future backend can reuse the same query structure even if it is implemented in another language.
+
+### Study Documents
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| POST | `/api/documents/import` | Fetch readable text and source links from an external web page. |
+| GET | `/api/documents` | List saved study documents. |
+| GET | `/api/documents?keyword=sql` | Search saved documents by title, content, tags, or source URL. |
+| GET | `/api/documents/{id}` | Open one saved document with its extracted links. |
+| POST | `/api/documents` | Save a new document after editing imported content. |
+| PUT | `/api/documents/{id}` | Update a saved document. |
+| DELETE | `/api/documents/{id}` | Delete a saved document and its links. |
+
+Example import request:
+
+```json
+{
+  "url": "https://example.com/article"
+}
+```
+
+Example document save request:
+
+```json
+{
+  "title": "SQL JOIN notes",
+  "sourceUrl": "https://example.com/sql-joins",
+  "tags": "database, sql",
+  "content": "Editable notes go here...",
+  "links": [
+    {
+      "label": "Original article",
+      "url": "https://example.com/sql-joins"
+    }
+  ]
+}
+```
+
+The backend creates `StudyDocuments` and `StudyDocumentLinks` automatically on startup, so this feature does not require rerunning the main database schema.

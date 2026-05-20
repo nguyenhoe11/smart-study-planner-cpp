@@ -10,12 +10,18 @@ const api = {
   weakTopics: "/api/reviews/weak-topics",
   statistics: "/api/statistics/study",
   topicStatistics: "/api/statistics/topics",
+  documents: "/api/documents",
+  documentImport: "/api/documents/import",
 };
 
 const state = {
   flashcards: [],
   subjects: [],
   topics: [],
+  documents: [],
+  currentDocumentId: "",
+  documentLinks: [],
+  documentSearch: "",
   currentSearch: "",
   filters: {
     subjectId: "",
@@ -54,6 +60,23 @@ const elements = {
   weakTopicList: document.querySelector("#weakTopicList"),
   topicStatsList: document.querySelector("#topicStatsList"),
   recentReviewList: document.querySelector("#recentReviewList"),
+  documentSearchInput: document.querySelector("#documentSearchInput"),
+  newDocumentButton: document.querySelector("#newDocumentButton"),
+  importForm: document.querySelector("#importForm"),
+  importUrlInput: document.querySelector("#importUrlInput"),
+  importButton: document.querySelector("#importButton"),
+  documentSummary: document.querySelector("#documentSummary"),
+  documentList: document.querySelector("#documentList"),
+  documentEditorTitle: document.querySelector("#documentEditorTitle"),
+  documentTitleInput: document.querySelector("#documentTitleInput"),
+  documentTagsInput: document.querySelector("#documentTagsInput"),
+  documentSourceInput: document.querySelector("#documentSourceInput"),
+  documentSourcePreview: document.querySelector("#documentSourcePreview"),
+  documentContentInput: document.querySelector("#documentContentInput"),
+  saveDocumentButton: document.querySelector("#saveDocumentButton"),
+  deleteDocumentButton: document.querySelector("#deleteDocumentButton"),
+  documentStatus: document.querySelector("#documentStatus"),
+  documentLinksList: document.querySelector("#documentLinksList"),
   toast: document.querySelector("#toast"),
 };
 
@@ -158,6 +181,225 @@ function setBusy(isBusy) {
 function formatPercent(value) {
   const number = Number(value || 0);
   return `${number.toFixed(2)}%`;
+}
+
+function formatCount(value, label) {
+  const number = Number(value || 0);
+  return `${number} ${label}${number === 1 ? "" : "s"}`;
+}
+
+function hostnameFromUrl(value) {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return value;
+  }
+}
+
+function visibleDocuments() {
+  const keyword = normalizeSearchText(state.documentSearch);
+  if (!keyword) return state.documents;
+
+  return state.documents.filter((document) => {
+    const text = normalizeSearchText(
+      [document.title, document.tags, document.sourceUrl].join(" ")
+    );
+    return text.includes(keyword);
+  });
+}
+
+function renderDocuments() {
+  const documents = visibleDocuments();
+  elements.documentSummary.textContent = state.documentSearch
+    ? `Showing ${documents.length} of ${state.documents.length} saved documents.`
+    : `${formatCount(state.documents.length, "document")} saved.`;
+
+  if (!documents.length) {
+    elements.documentList.innerHTML = `<div class="empty-state">No saved documents found.</div>`;
+    return;
+  }
+
+  elements.documentList.innerHTML = documents
+    .map(
+      (document) => `
+        <button class="document-row ${String(document.id) === String(state.currentDocumentId) ? "active" : ""}" type="button" data-document-id="${escapeHtml(document.id)}">
+          <span>
+            <strong>${escapeHtml(document.title)}</strong>
+            <small>${escapeHtml(document.tags || "No tags")} | ${escapeHtml(formatCount(document.linkCount, "link"))}</small>
+          </span>
+          <small>Updated ${escapeHtml(document.updatedAt)}</small>
+        </button>
+      `
+    )
+    .join("");
+}
+
+function renderDocumentSource(sourceUrl) {
+  if (!sourceUrl) {
+    elements.documentSourcePreview.classList.add("hidden");
+    elements.documentSourcePreview.innerHTML = "";
+    return;
+  }
+
+  elements.documentSourcePreview.classList.remove("hidden");
+  elements.documentSourcePreview.innerHTML = `
+    <span>Source</span>
+    <a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(hostnameFromUrl(sourceUrl))}</a>
+  `;
+}
+
+function renderDocumentLinks(links = []) {
+  state.documentLinks = links.slice(0, 30);
+
+  if (!state.documentLinks.length) {
+    elements.documentLinksList.innerHTML = `<div class="empty-state">No extracted links saved for this document.</div>`;
+    return;
+  }
+
+  elements.documentLinksList.innerHTML = `
+    <div class="source-links-heading">Extracted links</div>
+    ${state.documentLinks
+      .map(
+        (link) => `
+          <a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">
+            ${escapeHtml(link.label)}
+            <span>${escapeHtml(hostnameFromUrl(link.url))}</span>
+          </a>
+        `
+      )
+      .join("")}
+  `;
+}
+
+function resetDocumentEditor() {
+  state.currentDocumentId = "";
+  state.documentLinks = [];
+  elements.documentEditorTitle.textContent = "New study document";
+  elements.documentTitleInput.value = "";
+  elements.documentTagsInput.value = "";
+  elements.documentSourceInput.value = "";
+  elements.documentContentInput.value = "";
+  elements.documentStatus.textContent = "Draft is not saved yet.";
+  elements.deleteDocumentButton.classList.add("hidden");
+  renderDocumentSource("");
+  renderDocumentLinks([]);
+  renderDocuments();
+}
+
+function fillDocumentEditor(document, statusText) {
+  state.currentDocumentId = document.id || "";
+  elements.documentEditorTitle.textContent = document.id
+    ? `Editing #${document.id}`
+    : "Imported web document";
+  elements.documentTitleInput.value = document.title || "";
+  elements.documentTagsInput.value = document.tags || "";
+  elements.documentSourceInput.value = document.sourceUrl || "";
+  elements.documentContentInput.value = document.content || "";
+  elements.documentStatus.textContent = statusText;
+  elements.deleteDocumentButton.classList.toggle("hidden", !document.id);
+  renderDocumentSource(document.sourceUrl || "");
+  renderDocumentLinks(document.links || []);
+  renderDocuments();
+}
+
+async function loadDocument(documentId) {
+  setBusy(true);
+  try {
+    const savedDocument = await requestJson(`${api.documents}/${documentId}`);
+    fillDocumentEditor(savedDocument, `Loaded saved document #${savedDocument.id}.`);
+    window.document.querySelector("#documents").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function importDocument(event) {
+  event.preventDefault();
+  const url = elements.importUrlInput.value.trim();
+  if (!url) {
+    showToast("Paste a website URL first.", "error");
+    return;
+  }
+
+  setBusy(true);
+  try {
+    const imported = await requestJson(api.documentImport, {
+      method: "POST",
+      body: JSON.stringify({ url }),
+    });
+    fillDocumentEditor(
+      { ...imported, id: "", tags: "" },
+      "Imported content is ready. Edit it, then save it into your library."
+    );
+    showToast("Website content imported.");
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function saveDocument() {
+  const payload = {
+    title: elements.documentTitleInput.value.trim(),
+    tags: elements.documentTagsInput.value.trim() || null,
+    sourceUrl: elements.documentSourceInput.value.trim() || null,
+    content: elements.documentContentInput.value.trim(),
+    links: state.documentLinks,
+  };
+
+  if (!payload.title || !payload.content) {
+    showToast("Document title and content are required.", "error");
+    return;
+  }
+
+  setBusy(true);
+  try {
+    if (state.currentDocumentId) {
+      await requestJson(`${api.documents}/${state.currentDocumentId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      showToast("Document updated.");
+    } else {
+      const result = await requestJson(api.documents, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      state.currentDocumentId = result.id;
+      showToast("Document saved.");
+    }
+
+    await loadDashboard();
+    if (state.currentDocumentId) {
+      await loadDocument(state.currentDocumentId);
+    }
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function deleteDocument() {
+  if (!state.currentDocumentId) return;
+
+  const label = elements.documentTitleInput.value.trim() || `#${state.currentDocumentId}`;
+  if (!window.confirm(`Delete document "${label}"?`)) return;
+
+  setBusy(true);
+  try {
+    await requestJson(`${api.documents}/${state.currentDocumentId}`, { method: "DELETE" });
+    showToast("Document deleted.");
+    resetDocumentEditor();
+    await loadDashboard();
+  } catch (error) {
+    showToast(error.message, "error");
+  } finally {
+    setBusy(false);
+  }
 }
 
 function renderStats(stats) {
@@ -413,7 +655,7 @@ async function loadDashboard() {
   setBusy(true);
   try {
     await checkHealth();
-    const [stats, flashcards, subjects, topics, dueReviews, weakTopics, topicStats, recentReviews] = await Promise.all([
+    const [stats, flashcards, subjects, topics, dueReviews, weakTopics, topicStats, recentReviews, documents] = await Promise.all([
       requestJson(api.statistics),
       requestJson(api.flashcards),
       requestJson(api.subjects),
@@ -422,12 +664,15 @@ async function loadDashboard() {
       requestJson(api.weakTopics),
       requestJson(api.topicStatistics),
       requestJson(api.recentReviews),
+      requestJson(api.documents),
     ]);
 
     state.flashcards = flashcards;
     state.subjects = subjects;
     state.topics = topics;
+    state.documents = documents;
     renderStats(stats);
+    renderDocuments();
     renderFilters();
     applyFlashcardView();
     renderTopics(topics);
@@ -573,6 +818,22 @@ elements.topicFilter.addEventListener("change", updateFilters);
 elements.difficultyFilter.addEventListener("change", updateFilters);
 elements.dueOnlyFilter.addEventListener("change", updateFilters);
 elements.resetFiltersButton.addEventListener("click", resetFilters);
+elements.documentSearchInput.addEventListener("input", () => {
+  state.documentSearch = elements.documentSearchInput.value.trim();
+  renderDocuments();
+});
+elements.newDocumentButton.addEventListener("click", resetDocumentEditor);
+elements.importForm.addEventListener("submit", importDocument);
+elements.saveDocumentButton.addEventListener("click", saveDocument);
+elements.deleteDocumentButton.addEventListener("click", deleteDocument);
+elements.documentSourceInput.addEventListener("input", () => {
+  renderDocumentSource(elements.documentSourceInput.value.trim());
+});
+elements.documentList.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-document-id]");
+  if (!button) return;
+  loadDocument(button.dataset.documentId);
+});
 elements.flashcardForm.addEventListener("submit", saveFlashcard);
 elements.cancelEditButton.addEventListener("click", resetForm);
 

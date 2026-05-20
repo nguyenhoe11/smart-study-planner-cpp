@@ -250,6 +250,7 @@ main {
   display: grid;
   gap: 0.9rem;
   padding-bottom: 1.35rem;
+  scroll-margin-top: 92px;
 }
 
 .workspace-section:last-child {
@@ -356,6 +357,150 @@ main {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.document-layout {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 360px minmax(0, 1fr);
+}
+
+.document-library {
+  position: sticky;
+  top: 92px;
+}
+
+.inline-form {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.document-list {
+  display: grid;
+  gap: 0.6rem;
+  max-height: 460px;
+  overflow: auto;
+  padding-right: 0.2rem;
+}
+
+.document-row {
+  align-items: start;
+  background: #ffffff;
+  border-color: var(--line);
+  color: var(--ink);
+  display: grid;
+  gap: 0.4rem;
+  justify-content: stretch;
+  min-height: 76px;
+  padding: 0.72rem;
+  text-align: left;
+}
+
+.document-row.active {
+  background: var(--blue-soft);
+  border-color: #bad0ff;
+}
+
+.document-row span {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.document-row small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.document-editor-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.document-meta-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1.2fr) minmax(180px, 0.7fr);
+}
+
+.source-field {
+  grid-column: 1 / -1;
+}
+
+.source-preview {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.source-preview span,
+.source-links-heading {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.source-preview a,
+.source-links a {
+  color: var(--blue);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.source-preview a:hover,
+.source-links a:hover {
+  text-decoration: underline;
+}
+
+.document-content {
+  font-family: "Segoe UI", Arial, sans-serif;
+  line-height: 1.55;
+  min-height: 520px;
+}
+
+.document-footer {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.source-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.source-links-heading {
+  flex-basis: 100%;
+}
+
+.source-links a {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  max-width: 280px;
+  padding: 0.42rem 0.65rem;
+}
+
+.source-links a span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .check-label {
@@ -611,7 +756,7 @@ main {
   }
 
   .nav-list {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 
   .nav-list a {
@@ -621,9 +766,15 @@ main {
   .two-pane,
   .two-pane.balanced,
   .stats-grid,
+  .document-layout,
+  .document-meta-grid,
   .filter-grid,
   .insight-panels {
     grid-template-columns: 1fr;
+  }
+
+  .document-library {
+    position: static;
   }
 }
 

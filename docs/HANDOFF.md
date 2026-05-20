@@ -23,7 +23,11 @@ This file is the quick restart note for future Codex sessions.
   - Web migration plan is documented in `docs/WEB_MIGRATION_PLAN.md`.
   - Web dashboard screenshot exists at `docs/assets/web_dashboard.png`.
   - Current web UI has flashcard filters, editable topic changes, topic performance stats, and recent review activity.
+  - Study document library is implemented: import URL content, edit notes, save source links, reopen/update/delete saved documents.
+  - Document tables are auto-created by the backend: `StudyDocuments` and `StudyDocumentLinks`.
+  - Optional reference SQL for document tables exists at `sql/document_schema.sql`.
   - Latest web screenshot exists at `docs/assets/web_study_tools.png`.
+  - Document workspace screenshot exists at `docs/assets/web_document_workspace.png`.
 - Learning guide document exists at `docs/Smart_Study_Planner_Project_Guide.docx`.
 - VS Code/codebase-only guide exists at `docs/VSCode_Codebase_Guide.docx`.
 - C++ CLI + SQL Server Express deep explanation exists at `docs/CPP_CLI_SQL_Server_Express_Guide.docx`.

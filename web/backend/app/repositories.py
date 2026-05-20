@@ -1,4 +1,59 @@
-from app.db import execute, execute_transaction, fetch_all, fetch_one
+from app.db import execute, execute_transaction, fetch_all, fetch_one, get_connection
+
+
+def ensure_document_tables():
+    execute_transaction(
+        [
+            (
+                """
+                IF OBJECT_ID(N'dbo.StudyDocuments', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.StudyDocuments (
+                        DocumentId INT IDENTITY(1,1) PRIMARY KEY,
+                        Title NVARCHAR(250) NOT NULL,
+                        SourceUrl NVARCHAR(1000) NULL,
+                        Tags NVARCHAR(250) NULL,
+                        Content NVARCHAR(MAX) NOT NULL,
+                        CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+                        UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+                    );
+                END;
+                """,
+                (),
+            ),
+            (
+                """
+                IF OBJECT_ID(N'dbo.StudyDocumentLinks', N'U') IS NULL
+                BEGIN
+                    CREATE TABLE dbo.StudyDocumentLinks (
+                        DocumentLinkId INT IDENTITY(1,1) PRIMARY KEY,
+                        DocumentId INT NOT NULL,
+                        Label NVARCHAR(250) NOT NULL,
+                        Url NVARCHAR(1000) NOT NULL,
+                        CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+                        CONSTRAINT FK_StudyDocumentLinks_Documents
+                            FOREIGN KEY (DocumentId) REFERENCES dbo.StudyDocuments(DocumentId)
+                    );
+                END;
+                """,
+                (),
+            ),
+            (
+                """
+                IF NOT EXISTS (
+                    SELECT 1 FROM sys.indexes
+                    WHERE name = N'IX_StudyDocuments_UpdatedAt'
+                      AND object_id = OBJECT_ID(N'dbo.StudyDocuments')
+                )
+                BEGIN
+                    CREATE INDEX IX_StudyDocuments_UpdatedAt
+                    ON dbo.StudyDocuments(UpdatedAt DESC, DocumentId DESC);
+                END;
+                """,
+                (),
+            ),
+        ]
+    )
 
 
 def list_flashcards():
@@ -261,3 +316,172 @@ def topic_statistics():
         ORDER BY dueCount DESC, accuracy ASC, s.Name, t.Name;
         """
     )
+
+
+def list_documents():
+    return fetch_all(
+        """
+        SELECT
+            d.DocumentId AS id,
+            d.Title AS title,
+            d.SourceUrl AS sourceUrl,
+            d.Tags AS tags,
+            LEN(d.Content) AS characterCount,
+            (
+                SELECT COUNT(*)
+                FROM dbo.StudyDocumentLinks l
+                WHERE l.DocumentId = d.DocumentId
+            ) AS linkCount,
+            CONVERT(NVARCHAR(19), d.CreatedAt, 120) AS createdAt,
+            CONVERT(NVARCHAR(19), d.UpdatedAt, 120) AS updatedAt
+        FROM dbo.StudyDocuments d
+        ORDER BY d.UpdatedAt DESC, d.DocumentId DESC;
+        """
+    )
+
+
+def search_documents(keyword: str):
+    pattern = f"%{keyword}%"
+    return fetch_all(
+        """
+        SELECT
+            d.DocumentId AS id,
+            d.Title AS title,
+            d.SourceUrl AS sourceUrl,
+            d.Tags AS tags,
+            LEN(d.Content) AS characterCount,
+            (
+                SELECT COUNT(*)
+                FROM dbo.StudyDocumentLinks l
+                WHERE l.DocumentId = d.DocumentId
+            ) AS linkCount,
+            CONVERT(NVARCHAR(19), d.CreatedAt, 120) AS createdAt,
+            CONVERT(NVARCHAR(19), d.UpdatedAt, 120) AS updatedAt
+        FROM dbo.StudyDocuments d
+        WHERE d.Title LIKE ?
+           OR d.Content LIKE ?
+           OR d.Tags LIKE ?
+           OR d.SourceUrl LIKE ?
+        ORDER BY d.UpdatedAt DESC, d.DocumentId DESC;
+        """,
+        (pattern, pattern, pattern, pattern),
+    )
+
+
+def document_exists(document_id: int) -> bool:
+    row = fetch_one(
+        "SELECT COUNT(*) AS count FROM dbo.StudyDocuments WHERE DocumentId = ?;",
+        (document_id,),
+    )
+    return bool(row and row["count"] > 0)
+
+
+def get_document(document_id: int):
+    document = fetch_one(
+        """
+        SELECT
+            DocumentId AS id,
+            Title AS title,
+            SourceUrl AS sourceUrl,
+            Tags AS tags,
+            Content AS content,
+            LEN(Content) AS characterCount,
+            CONVERT(NVARCHAR(19), CreatedAt, 120) AS createdAt,
+            CONVERT(NVARCHAR(19), UpdatedAt, 120) AS updatedAt
+        FROM dbo.StudyDocuments
+        WHERE DocumentId = ?;
+        """,
+        (document_id,),
+    )
+    if not document:
+        return None
+
+    document["links"] = list_document_links(document_id)
+    return document
+
+
+def list_document_links(document_id: int):
+    return fetch_all(
+        """
+        SELECT
+            DocumentLinkId AS id,
+            Label AS label,
+            Url AS url
+        FROM dbo.StudyDocumentLinks
+        WHERE DocumentId = ?
+        ORDER BY DocumentLinkId;
+        """,
+        (document_id,),
+    )
+
+
+def create_document(title: str, source_url: str | None, tags: str | None, content: str, links: list[dict]):
+    with get_connection() as connection:
+        cursor = connection.cursor()
+        try:
+            cursor.execute(
+                """
+                INSERT INTO dbo.StudyDocuments (Title, SourceUrl, Tags, Content)
+                OUTPUT INSERTED.DocumentId
+                VALUES (?, ?, ?, ?);
+                """,
+                (title, source_url, tags, content),
+            )
+            document_id = int(cursor.fetchone()[0])
+            _insert_document_links(cursor, document_id, links)
+            connection.commit()
+            return document_id
+        except Exception:
+            connection.rollback()
+            raise
+
+
+def update_document(document_id: int, title: str, source_url: str | None, tags: str | None, content: str, links: list[dict]):
+    with get_connection() as connection:
+        cursor = connection.cursor()
+        try:
+            cursor.execute(
+                """
+                UPDATE dbo.StudyDocuments
+                SET
+                    Title = ?,
+                    SourceUrl = ?,
+                    Tags = ?,
+                    Content = ?,
+                    UpdatedAt = SYSUTCDATETIME()
+                WHERE DocumentId = ?;
+                """,
+                (title, source_url, tags, content, document_id),
+            )
+            cursor.execute("DELETE FROM dbo.StudyDocumentLinks WHERE DocumentId = ?;", (document_id,))
+            _insert_document_links(cursor, document_id, links)
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+
+
+def delete_document(document_id: int):
+    execute_transaction(
+        [
+            ("DELETE FROM dbo.StudyDocumentLinks WHERE DocumentId = ?;", (document_id,)),
+            ("DELETE FROM dbo.StudyDocuments WHERE DocumentId = ?;", (document_id,)),
+        ]
+    )
+
+
+def _insert_document_links(cursor, document_id: int, links: list[dict]):
+    seen: set[str] = set()
+    for link in links[:30]:
+        label = str(link.get("label", "")).strip()
+        url = str(link.get("url", "")).strip()
+        if not label or not url or url in seen:
+            continue
+        seen.add(url)
+        cursor.execute(
+            """
+            INSERT INTO dbo.StudyDocumentLinks (DocumentId, Label, Url)
+            VALUES (?, ?, ?);
+            """,
+            (document_id, label[:250], url[:1000]),
+        )
