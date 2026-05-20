@@ -6,12 +6,17 @@ def list_flashcards():
         """
         SELECT
             f.FlashcardId AS id,
+            s.SubjectId AS subjectId,
             s.Name AS subjectName,
+            t.TopicId AS topicId,
             t.Name AS topicName,
             f.Question AS question,
             f.Answer AS answer,
             f.Difficulty AS difficulty,
-            CONVERT(NVARCHAR(19), f.NextReviewAt, 120) AS nextReviewAt
+            f.ReviewIntervalDays AS reviewIntervalDays,
+            CASE WHEN f.NextReviewAt <= SYSUTCDATETIME() THEN 1 ELSE 0 END AS isDue,
+            CONVERT(NVARCHAR(19), f.NextReviewAt, 120) AS nextReviewAt,
+            CONVERT(NVARCHAR(19), f.CreatedAt, 120) AS createdAt
         FROM dbo.Flashcards f
         JOIN dbo.Topics t ON f.TopicId = t.TopicId
         JOIN dbo.Subjects s ON t.SubjectId = s.SubjectId
@@ -26,12 +31,17 @@ def search_flashcards(keyword: str):
         """
         SELECT
             f.FlashcardId AS id,
+            s.SubjectId AS subjectId,
             s.Name AS subjectName,
+            t.TopicId AS topicId,
             t.Name AS topicName,
             f.Question AS question,
             f.Answer AS answer,
             f.Difficulty AS difficulty,
-            CONVERT(NVARCHAR(19), f.NextReviewAt, 120) AS nextReviewAt
+            f.ReviewIntervalDays AS reviewIntervalDays,
+            CASE WHEN f.NextReviewAt <= SYSUTCDATETIME() THEN 1 ELSE 0 END AS isDue,
+            CONVERT(NVARCHAR(19), f.NextReviewAt, 120) AS nextReviewAt,
+            CONVERT(NVARCHAR(19), f.CreatedAt, 120) AS createdAt
         FROM dbo.Flashcards f
         JOIN dbo.Topics t ON f.TopicId = t.TopicId
         JOIN dbo.Subjects s ON t.SubjectId = s.SubjectId
@@ -63,14 +73,14 @@ def create_flashcard(topic_id: int, question: str, answer: str, difficulty: int)
     )
 
 
-def update_flashcard(flashcard_id: int, question: str, answer: str, difficulty: int):
+def update_flashcard(flashcard_id: int, topic_id: int, question: str, answer: str, difficulty: int):
     execute(
         """
         UPDATE dbo.Flashcards
-        SET Question = ?, Answer = ?, Difficulty = ?
+        SET TopicId = ?, Question = ?, Answer = ?, Difficulty = ?
         WHERE FlashcardId = ?;
         """,
-        (question, answer, difficulty, flashcard_id),
+        (topic_id, question, answer, difficulty, flashcard_id),
     )
 
 
@@ -88,12 +98,25 @@ def list_topics():
         """
         SELECT
             t.TopicId AS id,
+            s.SubjectId AS subjectId,
             s.Name AS subjectName,
             t.Name AS name,
             t.Priority AS priority
         FROM dbo.Topics t
         JOIN dbo.Subjects s ON t.SubjectId = s.SubjectId
         ORDER BY s.Name, t.Name;
+        """
+    )
+
+
+def list_subjects():
+    return fetch_all(
+        """
+        SELECT
+            SubjectId AS id,
+            Name AS name
+        FROM dbo.Subjects
+        ORDER BY Name;
         """
     )
 
@@ -114,7 +137,10 @@ def due_reviews():
             s.Name AS subjectName,
             t.Name AS topicName,
             f.Question AS question,
-            f.Answer AS answer
+            f.Answer AS answer,
+            f.Difficulty AS difficulty,
+            f.ReviewIntervalDays AS reviewIntervalDays,
+            CONVERT(NVARCHAR(19), f.NextReviewAt, 120) AS nextReviewAt
         FROM dbo.Flashcards f
         JOIN dbo.Topics t ON f.TopicId = t.TopicId
         JOIN dbo.Subjects s ON t.SubjectId = s.SubjectId
@@ -174,6 +200,27 @@ def weak_topics():
     )
 
 
+def recent_reviews(limit: int = 8):
+    safe_limit = max(1, min(limit, 20))
+    return fetch_all(
+        f"""
+        SELECT TOP {safe_limit}
+            rl.ReviewLogId AS id,
+            f.FlashcardId AS flashcardId,
+            s.Name AS subjectName,
+            t.Name AS topicName,
+            f.Question AS question,
+            rl.WasCorrect AS wasCorrect,
+            CONVERT(NVARCHAR(19), rl.ReviewedAt, 120) AS reviewedAt
+        FROM dbo.ReviewLogs rl
+        JOIN dbo.Flashcards f ON rl.FlashcardId = f.FlashcardId
+        JOIN dbo.Topics t ON f.TopicId = t.TopicId
+        JOIN dbo.Subjects s ON t.SubjectId = s.SubjectId
+        ORDER BY rl.ReviewedAt DESC, rl.ReviewLogId DESC;
+        """
+    )
+
+
 def study_statistics():
     return fetch_one(
         """
@@ -187,5 +234,30 @@ def study_statistics():
                 FROM dbo.ReviewLogs
             ), 0) AS accuracy,
             (SELECT COUNT(*) FROM dbo.Flashcards WHERE NextReviewAt <= SYSUTCDATETIME()) AS dueTodayCount;
+        """
+    )
+
+
+def topic_statistics():
+    return fetch_all(
+        """
+        SELECT
+            s.SubjectId AS subjectId,
+            s.Name AS subjectName,
+            t.TopicId AS topicId,
+            t.Name AS topicName,
+            t.Priority AS priority,
+            COUNT(DISTINCT f.FlashcardId) AS flashcardCount,
+            SUM(CASE WHEN f.NextReviewAt <= SYSUTCDATETIME() THEN 1 ELSE 0 END) AS dueCount,
+            COUNT(rl.ReviewLogId) AS reviewCount,
+            COALESCE(SUM(CASE WHEN rl.WasCorrect = 1 THEN 1 ELSE 0 END), 0) AS correctCount,
+            COALESCE(SUM(CASE WHEN rl.WasCorrect = 0 THEN 1 ELSE 0 END), 0) AS wrongCount,
+            COALESCE(CAST(100.0 * SUM(CASE WHEN rl.WasCorrect = 1 THEN 1 ELSE 0 END) / NULLIF(COUNT(rl.ReviewLogId), 0) AS DECIMAL(5,2)), 0) AS accuracy
+        FROM dbo.Topics t
+        JOIN dbo.Subjects s ON t.SubjectId = s.SubjectId
+        LEFT JOIN dbo.Flashcards f ON f.TopicId = t.TopicId
+        LEFT JOIN dbo.ReviewLogs rl ON rl.FlashcardId = f.FlashcardId
+        GROUP BY s.SubjectId, s.Name, t.TopicId, t.Name, t.Priority
+        ORDER BY dueCount DESC, accuracy ASC, s.Name, t.Name;
         """
     )

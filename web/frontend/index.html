@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Study Planner</title>
-    <link rel="stylesheet" href="/static/styles.css?v=search-fix" />
+    <link rel="stylesheet" href="/static/styles.css?v=study-tools" />
   </head>
   <body>
     <div class="app-shell">
@@ -22,13 +22,14 @@
           <a href="#editor">Editor</a>
           <a href="#review">Review</a>
           <a href="#insights">Insights</a>
+          <a href="#activity">Activity</a>
         </nav>
       </aside>
 
       <div class="workspace">
         <header class="topbar">
           <div>
-            <p class="eyebrow">C++ CLI core · FastAPI web layer</p>
+            <p class="eyebrow">C++ CLI core / FastAPI web layer</p>
             <h2>Study control center</h2>
           </div>
           <div class="topbar-actions">
@@ -62,6 +63,36 @@
                 </div>
               </div>
               <p id="searchSummary" class="search-summary">Showing all flashcards.</p>
+              <div class="filter-grid" aria-label="Flashcard filters">
+                <label>
+                  Subject
+                  <select id="subjectFilter">
+                    <option value="">All subjects</option>
+                  </select>
+                </label>
+                <label>
+                  Topic
+                  <select id="topicFilter">
+                    <option value="">All topics</option>
+                  </select>
+                </label>
+                <label>
+                  Difficulty
+                  <select id="difficultyFilter">
+                    <option value="">All difficulties</option>
+                    <option value="1">Difficulty 1</option>
+                    <option value="2">Difficulty 2</option>
+                    <option value="3">Difficulty 3</option>
+                    <option value="4">Difficulty 4</option>
+                    <option value="5">Difficulty 5</option>
+                  </select>
+                </label>
+                <label class="check-label">
+                  <input id="dueOnlyFilter" type="checkbox" />
+                  Due only
+                </label>
+                <button id="resetFiltersButton" class="secondary" type="button">Reset filters</button>
+              </div>
               <div id="flashcardList" class="card-list" aria-live="polite"></div>
             </div>
 
@@ -122,10 +153,35 @@
             <div class="section-heading">
               <div>
                 <p class="eyebrow">Insights</p>
-                <h3>Weak topics</h3>
+                <h3>Study performance</h3>
               </div>
             </div>
-            <div id="weakTopicList" class="insight-table" aria-live="polite"></div>
+            <div class="insight-panels">
+              <div>
+                <div class="subsection-heading">
+                  <h4>Weak topics</h4>
+                  <p>Topics with the highest wrong rate.</p>
+                </div>
+                <div id="weakTopicList" class="insight-table" aria-live="polite"></div>
+              </div>
+              <div>
+                <div class="subsection-heading">
+                  <h4>Topic progress</h4>
+                  <p>Flashcards, due cards, reviews, and accuracy by topic.</p>
+                </div>
+                <div id="topicStatsList" class="insight-table" aria-live="polite"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="activity" class="workspace-section">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Activity</p>
+                <h3>Recent reviews</h3>
+              </div>
+            </div>
+            <div id="recentReviewList" class="activity-list" aria-live="polite"></div>
           </section>
         </main>
       </div>
@@ -133,6 +189,6 @@
 
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-    <script src="/static/app.js?v=search-fix"></script>
+    <script src="/static/app.js?v=study-tools"></script>
   </body>
 </html>

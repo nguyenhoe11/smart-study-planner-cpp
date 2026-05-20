@@ -64,8 +64,12 @@ def update_flashcard(flashcard_id: int, payload: FlashcardUpdate):
     if not repositories.flashcard_exists(flashcard_id):
         raise HTTPException(status_code=404, detail="Flashcard not found.")
 
+    if not repositories.topic_exists(payload.topicId):
+        raise HTTPException(status_code=404, detail="Topic not found.")
+
     repositories.update_flashcard(
         flashcard_id,
+        payload.topicId,
         payload.question,
         payload.answer,
         payload.difficulty,
@@ -85,6 +89,11 @@ def delete_flashcard(flashcard_id: int):
 @app.get("/api/topics")
 def list_topics():
     return repositories.list_topics()
+
+
+@app.get("/api/subjects")
+def list_subjects():
+    return repositories.list_subjects()
 
 
 @app.get("/api/topics/{topic_id}/exists")
@@ -111,6 +120,16 @@ def weak_topics():
     return repositories.weak_topics()
 
 
+@app.get("/api/reviews/recent")
+def recent_reviews(limit: int = 8):
+    return repositories.recent_reviews(limit)
+
+
 @app.get("/api/statistics/study")
 def study_statistics():
     return repositories.study_statistics()
+
+
+@app.get("/api/statistics/topics")
+def topic_statistics():
+    return repositories.topic_statistics()

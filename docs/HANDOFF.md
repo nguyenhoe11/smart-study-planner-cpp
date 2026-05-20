@@ -22,6 +22,8 @@ This file is the quick restart note for future Codex sessions.
   - API contract is documented in `docs/API_CONTRACT.md`.
   - Web migration plan is documented in `docs/WEB_MIGRATION_PLAN.md`.
   - Web dashboard screenshot exists at `docs/assets/web_dashboard.png`.
+  - Current web UI has flashcard filters, editable topic changes, topic performance stats, and recent review activity.
+  - Latest web screenshot exists at `docs/assets/web_study_tools.png`.
 - Learning guide document exists at `docs/Smart_Study_Planner_Project_Guide.docx`.
 - VS Code/codebase-only guide exists at `docs/VSCode_Codebase_Guide.docx`.
 - C++ CLI + SQL Server Express deep explanation exists at `docs/CPP_CLI_SQL_Server_Express_Guide.docx`.

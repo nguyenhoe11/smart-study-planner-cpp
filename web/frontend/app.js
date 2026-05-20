@@ -2,17 +2,27 @@ const api = {
   health: "/api/health",
   flashcards: "/api/flashcards",
   flashcardSearch: "/api/flashcards/search",
+  subjects: "/api/subjects",
   topics: "/api/topics",
   dueReviews: "/api/reviews/due",
   reviews: "/api/reviews",
+  recentReviews: "/api/reviews/recent",
   weakTopics: "/api/reviews/weak-topics",
   statistics: "/api/statistics/study",
+  topicStatistics: "/api/statistics/topics",
 };
 
 const state = {
   flashcards: [],
+  subjects: [],
   topics: [],
   currentSearch: "",
+  filters: {
+    subjectId: "",
+    topicId: "",
+    difficulty: "",
+    dueOnly: false,
+  },
   busy: false,
 };
 
@@ -24,6 +34,11 @@ const elements = {
   searchButton: document.querySelector("#searchButton"),
   clearSearchButton: document.querySelector("#clearSearchButton"),
   searchSummary: document.querySelector("#searchSummary"),
+  subjectFilter: document.querySelector("#subjectFilter"),
+  topicFilter: document.querySelector("#topicFilter"),
+  difficultyFilter: document.querySelector("#difficultyFilter"),
+  dueOnlyFilter: document.querySelector("#dueOnlyFilter"),
+  resetFiltersButton: document.querySelector("#resetFiltersButton"),
   flashcardList: document.querySelector("#flashcardList"),
   flashcardForm: document.querySelector("#flashcardForm"),
   editingId: document.querySelector("#editingId"),
@@ -37,6 +52,8 @@ const elements = {
   reviewList: document.querySelector("#reviewList"),
   topicList: document.querySelector("#topicList"),
   weakTopicList: document.querySelector("#weakTopicList"),
+  topicStatsList: document.querySelector("#topicStatsList"),
+  recentReviewList: document.querySelector("#recentReviewList"),
   toast: document.querySelector("#toast"),
 };
 
@@ -79,23 +96,45 @@ function normalizeSearchText(value) {
 
 function visibleFlashcards() {
   const keyword = normalizeSearchText(state.currentSearch);
-  if (!keyword) return state.flashcards;
 
   return state.flashcards.filter((card) => {
     const searchableText = normalizeSearchText(
       [card.question, card.answer, card.topicName, card.subjectName].join(" ")
     );
-    return searchableText.includes(keyword);
+    const matchesKeyword = !keyword || searchableText.includes(keyword);
+    const matchesSubject = !state.filters.subjectId || String(card.subjectId) === state.filters.subjectId;
+    const matchesTopic = !state.filters.topicId || String(card.topicId) === state.filters.topicId;
+    const matchesDifficulty = !state.filters.difficulty || String(card.difficulty) === state.filters.difficulty;
+    const matchesDue = !state.filters.dueOnly || Number(card.isDue) === 1;
+    return matchesKeyword && matchesSubject && matchesTopic && matchesDifficulty && matchesDue;
   });
 }
 
+function activeFilterCount() {
+  return [
+    state.currentSearch,
+    state.filters.subjectId,
+    state.filters.topicId,
+    state.filters.difficulty,
+    state.filters.dueOnly ? "due" : "",
+  ].filter(Boolean).length;
+}
+
 function renderSearchSummary(visibleCount) {
-  if (!state.currentSearch) {
+  const filterCount = activeFilterCount();
+  if (!filterCount) {
     elements.searchSummary.textContent = `Showing all ${state.flashcards.length} flashcards.`;
     return;
   }
 
-  elements.searchSummary.textContent = `Showing ${visibleCount} result${visibleCount === 1 ? "" : "s"} for "${state.currentSearch}".`;
+  const keywordText = state.currentSearch ? ` for "${state.currentSearch}"` : "";
+  elements.searchSummary.textContent = `Showing ${visibleCount} of ${state.flashcards.length} flashcards${keywordText}. ${filterCount} filter${filterCount === 1 ? "" : "s"} active.`;
+}
+
+function applyFlashcardView() {
+  const filteredFlashcards = visibleFlashcards();
+  renderFlashcards(filteredFlashcards);
+  renderSearchSummary(filteredFlashcards.length);
 }
 
 function showToast(message, type = "info") {
@@ -160,6 +199,8 @@ function renderFlashcards(flashcards) {
             </div>
             <div class="badge-row">
               <span class="badge ${difficultyClass(Number(card.difficulty))}">Difficulty ${escapeHtml(card.difficulty)}</span>
+              ${Number(card.isDue) === 1 ? `<span class="badge due">Due now</span>` : ""}
+              <span class="badge">Every ${escapeHtml(card.reviewIntervalDays)} day${Number(card.reviewIntervalDays) === 1 ? "" : "s"}</span>
               <span class="badge">Next ${escapeHtml(card.nextReviewAt)}</span>
             </div>
           </div>
@@ -174,6 +215,35 @@ function renderFlashcards(flashcards) {
     .join("");
 }
 
+function renderFilters() {
+  const selectedSubject = state.filters.subjectId;
+  const selectedTopic = state.filters.topicId;
+  const topicsForFilter = selectedSubject
+    ? state.topics.filter((topic) => String(topic.subjectId) === selectedSubject)
+    : state.topics;
+
+  elements.subjectFilter.innerHTML = `
+    <option value="">All subjects</option>
+    ${state.subjects
+      .map((subject) => `<option value="${escapeHtml(subject.id)}">${escapeHtml(subject.name)}</option>`)
+      .join("")}
+  `;
+  elements.subjectFilter.value = selectedSubject;
+
+  elements.topicFilter.innerHTML = `
+    <option value="">All topics</option>
+    ${topicsForFilter
+      .map((topic) => `<option value="${escapeHtml(topic.id)}">${escapeHtml(topic.subjectName)} / ${escapeHtml(topic.name)}</option>`)
+      .join("")}
+  `;
+
+  const topicStillVisible = topicsForFilter.some((topic) => String(topic.id) === selectedTopic);
+  elements.topicFilter.value = topicStillVisible ? selectedTopic : "";
+  state.filters.topicId = elements.topicFilter.value;
+  elements.difficultyFilter.value = state.filters.difficulty;
+  elements.dueOnlyFilter.checked = state.filters.dueOnly;
+}
+
 function renderTopics(topics) {
   elements.topicSelect.innerHTML = topics
     .map((topic) => `<option value="${escapeHtml(topic.id)}">${escapeHtml(topic.subjectName)} / ${escapeHtml(topic.name)}</option>`)
@@ -185,7 +255,7 @@ function renderTopics(topics) {
           (topic) => `
             <div class="topic-row">
               <strong>#${escapeHtml(topic.id)} ${escapeHtml(topic.name)}</strong>
-              <span>${escapeHtml(topic.subjectName)} · Priority ${escapeHtml(topic.priority)}</span>
+              <span>${escapeHtml(topic.subjectName)} | Priority ${escapeHtml(topic.priority)}</span>
             </div>
           `
         )
@@ -206,6 +276,11 @@ function renderDueReviews(reviews) {
           <div>
             <p class="card-title">#${escapeHtml(review.flashcardId)} ${escapeHtml(review.question)}</p>
             <div class="meta-line">${escapeHtml(review.subjectName)} / ${escapeHtml(review.topicName)}</div>
+          </div>
+          <div class="badge-row">
+            <span class="badge ${difficultyClass(Number(review.difficulty))}">Difficulty ${escapeHtml(review.difficulty)}</span>
+            <span class="badge">Interval ${escapeHtml(review.reviewIntervalDays)} day${Number(review.reviewIntervalDays) === 1 ? "" : "s"}</span>
+            <span class="badge due">Due ${escapeHtml(review.nextReviewAt)}</span>
           </div>
           <p class="answer-text hidden" data-answer-for="${escapeHtml(review.flashcardId)}">${escapeHtml(review.answer)}</p>
           <div class="review-actions">
@@ -247,6 +322,57 @@ function renderWeakTopics(topics) {
   `;
 }
 
+function renderTopicStats(topics) {
+  if (!topics.length) {
+    elements.topicStatsList.innerHTML = `<div class="empty-state">No topic statistics yet.</div>`;
+    return;
+  }
+
+  elements.topicStatsList.innerHTML = `
+    <div class="topic-stat-row header">
+      <span>Topic</span>
+      <span>Cards</span>
+      <span>Due</span>
+      <span>Reviews</span>
+      <span>Accuracy</span>
+    </div>
+    ${topics
+      .map(
+        (topic) => `
+          <div class="topic-stat-row">
+            <strong>${escapeHtml(topic.subjectName)} / ${escapeHtml(topic.topicName)}</strong>
+            <span>${escapeHtml(topic.flashcardCount)}</span>
+            <span>${escapeHtml(topic.dueCount)}</span>
+            <span>${escapeHtml(topic.reviewCount)}</span>
+            <span>${formatPercent(topic.accuracy)}</span>
+          </div>
+        `
+      )
+      .join("")}
+  `;
+}
+
+function renderRecentReviews(reviews) {
+  if (!reviews.length) {
+    elements.recentReviewList.innerHTML = `<div class="empty-state">No reviews saved yet.</div>`;
+    return;
+  }
+
+  elements.recentReviewList.innerHTML = reviews
+    .map(
+      (review) => `
+        <article class="activity-row">
+          <div>
+            <strong>#${escapeHtml(review.flashcardId)} ${escapeHtml(review.question)}</strong>
+            <span>${escapeHtml(review.subjectName)} / ${escapeHtml(review.topicName)} | ${escapeHtml(review.reviewedAt)}</span>
+          </div>
+          <span class="badge ${review.wasCorrect ? "difficulty-low" : "difficulty-high"}">${review.wasCorrect ? "Correct" : "Wrong"}</span>
+        </article>
+      `
+    )
+    .join("");
+}
+
 function resetForm() {
   elements.flashcardForm.reset();
   elements.editingId.value = "";
@@ -260,10 +386,8 @@ function startEdit(id) {
   const card = state.flashcards.find((item) => Number(item.id) === Number(id));
   if (!card) return;
 
-  const topic = state.topics.find((item) => item.name === card.topicName && item.subjectName === card.subjectName);
-
   elements.editingId.value = card.id;
-  if (topic) elements.topicSelect.value = topic.id;
+  elements.topicSelect.value = card.topicId;
   elements.questionInput.value = card.question;
   elements.answerInput.value = card.answer;
   elements.difficultyInput.value = card.difficulty;
@@ -289,23 +413,28 @@ async function loadDashboard() {
   setBusy(true);
   try {
     await checkHealth();
-    const [stats, flashcards, topics, dueReviews, weakTopics] = await Promise.all([
+    const [stats, flashcards, subjects, topics, dueReviews, weakTopics, topicStats, recentReviews] = await Promise.all([
       requestJson(api.statistics),
       requestJson(api.flashcards),
+      requestJson(api.subjects),
       requestJson(api.topics),
       requestJson(api.dueReviews),
       requestJson(api.weakTopics),
+      requestJson(api.topicStatistics),
+      requestJson(api.recentReviews),
     ]);
 
     state.flashcards = flashcards;
+    state.subjects = subjects;
     state.topics = topics;
-    const filteredFlashcards = visibleFlashcards();
     renderStats(stats);
-    renderFlashcards(filteredFlashcards);
-    renderSearchSummary(filteredFlashcards.length);
+    renderFilters();
+    applyFlashcardView();
     renderTopics(topics);
     renderDueReviews(dueReviews);
     renderWeakTopics(weakTopics);
+    renderTopicStats(topicStats);
+    renderRecentReviews(recentReviews);
   } catch (error) {
     showToast(error.message, "error");
   } finally {
@@ -340,6 +469,7 @@ async function saveFlashcard(event) {
       await requestJson(`${api.flashcards}/${id}`, {
         method: "PUT",
         body: JSON.stringify({
+          topicId: payload.topicId,
           question: payload.question,
           answer: payload.answer,
           difficulty: payload.difficulty,
@@ -399,16 +529,33 @@ async function saveReview(flashcardId, wasCorrect) {
 
 function searchFlashcards() {
   state.currentSearch = elements.searchInput.value.trim();
-  const filteredFlashcards = visibleFlashcards();
-  renderFlashcards(filteredFlashcards);
-  renderSearchSummary(filteredFlashcards.length);
+  applyFlashcardView();
 }
 
 function clearSearch() {
   state.currentSearch = "";
   elements.searchInput.value = "";
-  renderFlashcards(state.flashcards);
-  renderSearchSummary(state.flashcards.length);
+  applyFlashcardView();
+}
+
+function resetFilters() {
+  state.filters = {
+    subjectId: "",
+    topicId: "",
+    difficulty: "",
+    dueOnly: false,
+  };
+  renderFilters();
+  applyFlashcardView();
+}
+
+function updateFilters() {
+  state.filters.subjectId = elements.subjectFilter.value;
+  state.filters.topicId = elements.topicFilter.value;
+  state.filters.difficulty = elements.difficultyFilter.value;
+  state.filters.dueOnly = elements.dueOnlyFilter.checked;
+  renderFilters();
+  applyFlashcardView();
 }
 
 elements.refreshButton.addEventListener("click", loadDashboard);
@@ -419,10 +566,13 @@ elements.searchInput.addEventListener("keydown", (event) => {
 });
 elements.searchInput.addEventListener("input", () => {
   state.currentSearch = elements.searchInput.value.trim();
-  const filteredFlashcards = visibleFlashcards();
-  renderFlashcards(filteredFlashcards);
-  renderSearchSummary(filteredFlashcards.length);
+  applyFlashcardView();
 });
+elements.subjectFilter.addEventListener("change", updateFilters);
+elements.topicFilter.addEventListener("change", updateFilters);
+elements.difficultyFilter.addEventListener("change", updateFilters);
+elements.dueOnlyFilter.addEventListener("change", updateFilters);
+elements.resetFiltersButton.addEventListener("click", resetFilters);
 elements.flashcardForm.addEventListener("submit", saveFlashcard);
 elements.cancelEditButton.addEventListener("click", resetForm);
 

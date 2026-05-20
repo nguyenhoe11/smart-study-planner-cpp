@@ -34,6 +34,7 @@ Example flashcard response:
 | --- | --- | --- | --- |
 | GET | `/api/topics` | List topics | `TopicRepository::getAll` |
 | GET | `/api/topics/{id}/exists` | Validate topic before creating flashcards | `TopicRepository::exists` |
+| GET | `/api/subjects` | List subjects for web filters | Web repository helper |
 
 Example topic-exists response:
 
@@ -50,6 +51,7 @@ Example topic-exists response:
 | GET | `/api/reviews/due` | Get due flashcards | `ReviewRepository::getDueFlashcards` |
 | POST | `/api/reviews` | Save correct/wrong result | `ReviewRepository::saveReview` |
 | GET | `/api/reviews/weak-topics` | Show weak topics | `ReviewRepository::getWeakTopics` |
+| GET | `/api/reviews/recent?limit=8` | Show recent review activity | Web repository helper |
 
 Example review request:
 
@@ -65,6 +67,7 @@ Example review request:
 | Method | Endpoint | Purpose | Current C++ Layer |
 | --- | --- | --- | --- |
 | GET | `/api/statistics/study` | Show total flashcards, reviews, accuracy, and due count | `StatisticsRepository::getStudyStatistics` |
+| GET | `/api/statistics/topics` | Show flashcards, due count, review count, and accuracy by topic | Web repository helper |
 
 Example statistics response:
 
