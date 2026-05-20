@@ -17,10 +17,11 @@ This file is the quick restart note for future Codex sessions.
   - Show weak topics
   - Show study statistics
 - Web preparation is started:
-  - FastAPI backend scaffold exists in `web/backend`.
-  - Static frontend prototype exists in `web/frontend`.
+  - FastAPI backend exists in `web/backend`.
+  - Static frontend app exists in `web/frontend`.
   - API contract is documented in `docs/API_CONTRACT.md`.
   - Web migration plan is documented in `docs/WEB_MIGRATION_PLAN.md`.
+  - Web dashboard screenshot exists at `docs/assets/web_dashboard.png`.
 - Learning guide document exists at `docs/Smart_Study_Planner_Project_Guide.docx`.
 - VS Code/codebase-only guide exists at `docs/VSCode_Codebase_Guide.docx`.
 - C++ CLI + SQL Server Express deep explanation exists at `docs/CPP_CLI_SQL_Server_Express_Guide.docx`.
@@ -72,9 +73,8 @@ http://127.0.0.1:8000
 
 ## Next Recommended Work
 
-1. Connect the frontend screens to all backend endpoints.
-2. Add create/edit/delete forms for flashcards in the web UI.
-3. Add review workflow page.
-4. Add dashboard cards for study statistics and weak topics.
-5. Improve styling for a portfolio-ready web app.
-6. Add screenshots and demo instructions to `README.md`.
+1. Add an ERD diagram for the SQL Server schema.
+2. Record a short demo GIF or video.
+3. Add deployment notes for running outside the local machine.
+4. Consider parameterized C++ ODBC statements as a security improvement.
+5. Add automated integration tests for the FastAPI endpoints.

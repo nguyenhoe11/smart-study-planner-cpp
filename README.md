@@ -2,6 +2,8 @@
 
 A C++20 and SQL Server flashcard planner that helps students organize topics, review flashcards, and track weak areas using a simple spaced-repetition workflow.
 
+![Smart Study Planner web dashboard](docs/assets/web_dashboard.png)
+
 ## Features
 
 - Manage study flashcards from a C++ CLI.
@@ -14,6 +16,7 @@ A C++20 and SQL Server flashcard planner that helps students organize topics, re
 - Update the next review date based on review performance.
 - Show weak topics based on wrong-answer rate.
 - Show overall study statistics.
+- Use the FastAPI web app dashboard for flashcards, reviews, weak topics, and statistics.
 
 ## Tech Stack
 
@@ -23,6 +26,9 @@ A C++20 and SQL Server flashcard planner that helps students organize topics, re
 - CMake
 - Visual Studio 2026 MSVC toolchain
 - Git
+- Python 3.12
+- FastAPI
+- HTML/CSS/JavaScript
 
 ## Database Schema
 
@@ -100,6 +106,35 @@ Optional:
 .\build\smart_study_planner.exe --server HOANE\SQLEXPRESS --database SmartStudyPlanner
 ```
 
+## Run Web App
+
+From the backend folder:
+
+```powershell
+cd C:\Users\Admin\Documents\project\web\backend
+.\.venv\Scripts\activate
+uvicorn app.main:app --reload
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000
+```
+
+The web app connects to the same SQL Server database as the C++ CLI.
+
+## Demo Checklist
+
+1. Run the C++ CLI and choose `8` to show study statistics.
+2. Start the FastAPI web app.
+3. Open the dashboard at `http://127.0.0.1:8000`.
+4. Search for a flashcard by question, answer, topic, or subject.
+5. Add a new flashcard with a valid topic.
+6. Edit the new flashcard from the web editor.
+7. Review a due flashcard and mark it correct or wrong.
+8. Check weak topics and updated study statistics.
+
 ## Project Structure
 
 ```text
@@ -140,13 +175,17 @@ smart-study-planner-cpp/
   docs/
     API_CONTRACT.md
     WEB_MIGRATION_PLAN.md
+    assets/
   CMakeLists.txt
   README.md
+  web/
+    backend/
+    frontend/
 ```
 
 ## Web Migration
 
-The CLI is structured so it can later become a web app:
+The CLI is structured so it can become a web app:
 
 ```text
 main.cpp -> Menu -> Service -> Repository -> DbConnection -> SQL Server
@@ -158,7 +197,7 @@ See:
 - `docs/WEB_MIGRATION_PLAN.md`
 - `web/README.md`
 
-An initial FastAPI + plain HTML/CSS/JavaScript web prototype is scaffolded in `web/`.
+The FastAPI + plain HTML/CSS/JavaScript web app is available in `web/`.
 
 ## Learning Goals
 

@@ -87,6 +87,11 @@ def list_topics():
     return repositories.list_topics()
 
 
+@app.get("/api/topics/{topic_id}/exists")
+def topic_exists(topic_id: int):
+    return {"exists": repositories.topic_exists(topic_id)}
+
+
 @app.get("/api/reviews/due")
 def due_reviews():
     return repositories.due_reviews()
@@ -109,4 +114,3 @@ def weak_topics():
 @app.get("/api/statistics/study")
 def study_statistics():
     return repositories.study_statistics()
-

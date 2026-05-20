@@ -1,4 +1,4 @@
-from app.db import execute, fetch_all, fetch_one
+from app.db import execute, execute_transaction, fetch_all, fetch_one
 
 
 def list_flashcards():
@@ -75,8 +75,12 @@ def update_flashcard(flashcard_id: int, question: str, answer: str, difficulty: 
 
 
 def delete_flashcard(flashcard_id: int):
-    execute("DELETE FROM dbo.ReviewLogs WHERE FlashcardId = ?;", (flashcard_id,))
-    execute("DELETE FROM dbo.Flashcards WHERE FlashcardId = ?;", (flashcard_id,))
+    execute_transaction(
+        [
+            ("DELETE FROM dbo.ReviewLogs WHERE FlashcardId = ?;", (flashcard_id,)),
+            ("DELETE FROM dbo.Flashcards WHERE FlashcardId = ?;", (flashcard_id,)),
+        ]
+    )
 
 
 def list_topics():
@@ -122,27 +126,31 @@ def due_reviews():
 
 def save_review(flashcard_id: int, was_correct: bool):
     correct_value = 1 if was_correct else 0
-    execute(
-        "INSERT INTO dbo.ReviewLogs (FlashcardId, WasCorrect) VALUES (?, ?);",
-        (flashcard_id, correct_value),
-    )
-    execute(
-        """
-        UPDATE dbo.Flashcards
-        SET
-            ReviewIntervalDays = CASE
-                WHEN ? = 1 THEN
-                    CASE WHEN ReviewIntervalDays * 2 > 30 THEN 30 ELSE ReviewIntervalDays * 2 END
-                ELSE 1
-            END,
-            NextReviewAt = DATEADD(day, CASE
-                WHEN ? = 1 THEN
-                    CASE WHEN ReviewIntervalDays * 2 > 30 THEN 30 ELSE ReviewIntervalDays * 2 END
-                ELSE 1
-            END, SYSUTCDATETIME())
-        WHERE FlashcardId = ?;
-        """,
-        (correct_value, correct_value, flashcard_id),
+    execute_transaction(
+        [
+            (
+                "INSERT INTO dbo.ReviewLogs (FlashcardId, WasCorrect) VALUES (?, ?);",
+                (flashcard_id, correct_value),
+            ),
+            (
+                """
+                UPDATE dbo.Flashcards
+                SET
+                    ReviewIntervalDays = CASE
+                        WHEN ? = 1 THEN
+                            CASE WHEN ReviewIntervalDays * 2 > 30 THEN 30 ELSE ReviewIntervalDays * 2 END
+                        ELSE 1
+                    END,
+                    NextReviewAt = DATEADD(day, CASE
+                        WHEN ? = 1 THEN
+                            CASE WHEN ReviewIntervalDays * 2 > 30 THEN 30 ELSE ReviewIntervalDays * 2 END
+                        ELSE 1
+                    END, SYSUTCDATETIME())
+                WHERE FlashcardId = ?;
+                """,
+                (correct_value, correct_value, flashcard_id),
+            ),
+        ]
     )
 
 
@@ -181,4 +189,3 @@ def study_statistics():
             (SELECT COUNT(*) FROM dbo.Flashcards WHERE NextReviewAt <= SYSUTCDATETIME()) AS dueTodayCount;
         """
     )
-

@@ -7,55 +7,131 @@
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <header class="app-header">
-      <div>
-        <h1>Smart Study Planner</h1>
-        <p>C++ + SQL Server flashcards, now prepared for the web.</p>
-      </div>
-      <button id="refreshButton">Refresh</button>
-    </header>
-
-    <main class="layout">
-      <section class="panel stats-panel">
-        <h2>Statistics</h2>
-        <div id="statsGrid" class="stats-grid"></div>
-      </section>
-
-      <section class="panel">
-        <div class="section-header">
-          <h2>Flashcards</h2>
-          <div class="search-row">
-            <input id="searchInput" type="search" placeholder="Search question, answer, topic..." />
-            <button id="searchButton">Search</button>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-block">
+          <div class="brand-mark">SS</div>
+          <div>
+            <h1>Smart Study Planner</h1>
+            <p>SQL Server study workspace</p>
           </div>
         </div>
-        <div id="flashcardList" class="list"></div>
-      </section>
+        <nav class="nav-list" aria-label="Primary sections">
+          <a href="#dashboard">Dashboard</a>
+          <a href="#flashcards">Flashcards</a>
+          <a href="#editor">Editor</a>
+          <a href="#review">Review</a>
+          <a href="#insights">Insights</a>
+        </nav>
+      </aside>
 
-      <section class="panel">
-        <h2>Add Flashcard</h2>
-        <form id="addForm" class="form-grid">
-          <select id="topicSelect" required></select>
-          <input id="questionInput" type="text" placeholder="Question" required />
-          <input id="answerInput" type="text" placeholder="Answer" required />
-          <input id="difficultyInput" type="number" min="1" max="5" value="3" required />
-          <button type="submit">Add</button>
-        </form>
-      </section>
+      <div class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">C++ CLI core · FastAPI web layer</p>
+            <h2>Study control center</h2>
+          </div>
+          <div class="topbar-actions">
+            <span id="healthStatus" class="status-pill">Checking API</span>
+            <button id="refreshButton" type="button">Refresh</button>
+          </div>
+        </header>
 
-      <section class="panel two-column">
-        <div>
-          <h2>Due Reviews</h2>
-          <div id="reviewList" class="list"></div>
-        </div>
-        <div>
-          <h2>Weak Topics</h2>
-          <div id="weakTopicList" class="list"></div>
-        </div>
-      </section>
-    </main>
+        <main>
+          <section id="dashboard" class="workspace-section">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Dashboard</p>
+                <h3>Study statistics</h3>
+              </div>
+            </div>
+            <div id="statsGrid" class="stats-grid" aria-live="polite"></div>
+          </section>
+
+          <section id="flashcards" class="workspace-section two-pane">
+            <div class="section-main">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Library</p>
+                  <h3>Flashcards</h3>
+                </div>
+                <div class="toolbar">
+                  <input id="searchInput" type="search" placeholder="Search question, answer, topic, subject" />
+                  <button id="searchButton" type="button">Search</button>
+                  <button id="clearSearchButton" class="secondary" type="button">Clear</button>
+                </div>
+              </div>
+              <div id="flashcardList" class="card-list" aria-live="polite"></div>
+            </div>
+
+            <aside id="editor" class="tool-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Editor</p>
+                  <h3 id="formTitle">Add flashcard</h3>
+                </div>
+                <button id="cancelEditButton" class="secondary hidden" type="button">Cancel</button>
+              </div>
+              <form id="flashcardForm" class="form-stack">
+                <input id="editingId" type="hidden" />
+                <label>
+                  Topic
+                  <select id="topicSelect" required></select>
+                </label>
+                <label>
+                  Question
+                  <textarea id="questionInput" rows="4" maxlength="500" required></textarea>
+                </label>
+                <label>
+                  Answer
+                  <textarea id="answerInput" rows="5" maxlength="1000" required></textarea>
+                </label>
+                <label>
+                  Difficulty
+                  <input id="difficultyInput" type="number" min="1" max="5" value="3" required />
+                </label>
+                <button id="submitFlashcardButton" type="submit">Add flashcard</button>
+              </form>
+            </aside>
+          </section>
+
+          <section id="review" class="workspace-section two-pane balanced">
+            <div class="section-main">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">Review queue</p>
+                  <h3>Due flashcards</h3>
+                </div>
+              </div>
+              <div id="reviewList" class="review-list" aria-live="polite"></div>
+            </div>
+
+            <aside class="tool-panel">
+              <div class="panel-heading">
+                <div>
+                  <p class="eyebrow">Reference</p>
+                  <h3>Topics</h3>
+                </div>
+              </div>
+              <div id="topicList" class="compact-list" aria-live="polite"></div>
+            </aside>
+          </section>
+
+          <section id="insights" class="workspace-section">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Insights</p>
+                <h3>Weak topics</h3>
+              </div>
+            </div>
+            <div id="weakTopicList" class="insight-table" aria-live="polite"></div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
     <script src="/static/app.js"></script>
   </body>
 </html>
-

@@ -35,6 +35,14 @@ Example flashcard response:
 | GET | `/api/topics` | List topics | `TopicRepository::getAll` |
 | GET | `/api/topics/{id}/exists` | Validate topic before creating flashcards | `TopicRepository::exists` |
 
+Example topic-exists response:
+
+```json
+{
+  "exists": true
+}
+```
+
 ### Reviews
 
 | Method | Endpoint | Purpose | Current C++ Layer |
@@ -78,4 +86,3 @@ Example statistics response:
 - Frontend: React or plain HTML/CSS/JavaScript for a first version.
 
 The current repository classes already isolate most SQL queries, so a future backend can reuse the same query structure even if it is implemented in another language.
-

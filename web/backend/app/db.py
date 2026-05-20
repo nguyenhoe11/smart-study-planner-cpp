@@ -52,3 +52,14 @@ def execute(sql: str, params=()):
         cursor.execute(sql, params)
         connection.commit()
 
+
+def execute_transaction(statements):
+    with get_connection() as connection:
+        cursor = connection.cursor()
+        try:
+            for sql, params in statements:
+                cursor.execute(sql, params)
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
